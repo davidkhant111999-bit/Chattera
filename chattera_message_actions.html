@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="my">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#191b30">
+<title>Chattera — Real-time Chat</title>
+<style>
+:root{color-scheme:dark;--bg:#101323;--p:#191b30;--p2:#232641;--line:#343653;--t:#f5f4ff;--m:#aaaac4;--b:#a99aff;--g:#66ddb0;--lav:#b7a9ff;--pink:#e0b7ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:15px system-ui,sans-serif;height:100dvh;overflow:hidden}
+button,input{font:inherit}button{cursor:pointer;border:0;color:inherit}
+.screen{min-height:100dvh;display:grid;place-items:center;padding:18px}.card{width:min(440px,100%);background:var(--p);border:1px solid var(--line);border-radius:22px;padding:25px;box-shadow:0 18px 60px #0005}
+.brand{display:flex;align-items:center;gap:11px;font-size:24px;font-weight:800}.logo{width:42px;height:42px;border-radius:15px;background:linear-gradient(135deg,#42a5ff,#7866e8);display:grid;place-items:center}.sub{color:var(--m);margin:9px 0 24px}
+.field{margin:14px 0}.field label{display:block;color:#c5d0da;font-size:13px;margin-bottom:7px}.field input{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);background:var(--p2);color:var(--t);outline:none}
+.primary{background:var(--b);padding:12px 16px;border-radius:11px;font-weight:700}.wide{width:100%;margin-top:8px}.primary:disabled{opacity:.55}.link{background:none;color:#71b8ff;padding:0;font-weight:650}
+.switch{text-align:center;color:var(--m);margin:18px 0 0;font-size:14px}.notice{display:none;padding:11px 12px;border-radius:10px;margin:14px 0;font-size:13px}.notice.error{display:block;background:#4a252b;color:#ffc5c8}.notice.ok{display:block;background:#173d32;color:#b7f2d2}
+.small{font-size:12px;color:var(--m);line-height:1.5;margin-top:18px}
+#app{height:100dvh;display:none;grid-template-columns:350px 1fr;max-width:1440px;margin:auto;background:var(--p)}
+.sidebar{border-right:1px solid var(--line);display:flex;flex-direction:column;min-width:0}.side-head{height:64px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}
+.side-head .brand{font-size:21px}.iconbtn{width:40px;height:40px;border-radius:50%;background:transparent;color:var(--m);font-size:22px}.iconbtn:hover{background:var(--p2);color:var(--t)}
+.my-profile{display:flex;align-items:center;gap:11px;padding:12px 15px;border-bottom:1px solid var(--line);cursor:pointer;background:#ffffff04}.my-profile:hover{background:var(--p2)}.my-profile .avatar{width:44px;height:44px}.my-profile-info{min-width:0;flex:1}.my-profile-info strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.my-profile-info small{color:var(--m)}.avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}.profile-preview{width:76px;height:76px;border-radius:50%;background:var(--p2);display:grid;place-items:center;overflow:hidden;margin:0 auto 14px;font-size:30px}.profile-preview img{width:100%;height:100%;object-fit:cover}.search-wrap{padding:12px 14px}.search{width:100%;background:var(--p2);border:1px solid transparent;border-radius:12px;padding:11px 14px;color:var(--t);outline:none}.search:focus{border-color:var(--b)}
+.chat-list{overflow:auto;flex:1}.chat-item{display:flex;align-items:center;gap:12px;padding:12px 15px;cursor:pointer;border-bottom:1px solid #ffffff08}.chat-item:hover,.chat-item.active{background:#243342}
+.avatar{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;font-size:20px;flex:none;background:linear-gradient(135deg,#587eaa,#3e5977)}.avatar-wrap{position:relative;flex:none}.status-dot{position:absolute;right:0;bottom:1px;width:12px;height:12px;border-radius:50%;border:2px solid var(--p);background:#7d8995}.status-dot.online{background:#54c98a}.status-label{font-size:12px;color:var(--m)}
+.chat-info{min-width:0;flex:1}.chat-top{display:flex;justify-content:space-between;gap:8px}.chat-name{font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.time,.preview{font-size:12px;color:var(--m)}.preview{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px}
+.main{display:flex;flex-direction:column;min-width:0;height:100%;min-height:0;background:radial-gradient(ellipse at center,#1c2b39 0,#17212b 75%)}
+.welcome{height:100%;display:grid;place-items:center;text-align:center;color:var(--m);padding:24px}.welcome-card{max-width:360px}.welcome .big{font-size:58px;margin-bottom:12px}.welcome h2{color:var(--t);margin:0 0 8px}
+.conversation{display:none;flex:1;flex-direction:column;height:auto;min-height:0;overflow:hidden}.topbar{flex-shrink:0;height:64px;padding:0 18px;display:flex;align-items:center;gap:12px;background:var(--p);border-bottom:1px solid var(--line)}
+.person{flex:1;min-width:0}.person strong{display:block}.person small{color:var(--m)}.person small.online-text{color:var(--g)}.messages{flex:1;min-height:0;overflow:auto;padding:22px clamp(14px,5vw,70px);display:flex;flex-direction:column;gap:9px}
+.bubble{max-width:min(76%,560px);padding:10px 13px 7px;border-radius:14px;background:#253443;align-self:flex-start;overflow-wrap:anywhere}.bubble.mine{align-self:flex-end;background:#315d82;border-bottom-right-radius:5px}.bubble:not(.mine){border-bottom-left-radius:5px}.stamp{display:block;text-align:right;color:#c0cfda;font-size:10px;margin-top:4px}
+.composer{flex-shrink:0;position:sticky;bottom:0;z-index:2;padding:12px 18px 16px;display:flex;align-items:center;gap:10px;background:var(--p)}.compose-input{flex:1;min-width:0;border:0;outline:0;border-radius:24px;background:var(--p2);padding:13px 17px;color:var(--t)}.send{width:44px;height:44px;border-radius:50%;background:var(--b);font-size:19px}
+.empty{padding:25px;text-align:center;color:var(--m)}.overlay{position:fixed;inset:0;background:#0009;display:none;align-items:center;justify-content:center;padding:18px;z-index:5}.overlay.show{display:flex}
+.modal{width:min(430px,100%);max-height:80dvh;overflow:auto;background:var(--p);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 20px 70px #0008}.modal h3{margin:0 0 14px}.modal input{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--p2);color:var(--t);outline:0;margin-bottom:12px}
+.user-result{display:flex;align-items:center;gap:12px;padding:11px;border-bottom:1px solid var(--line);cursor:pointer}.user-result:hover{background:var(--p2)}.user-result .avatar{width:40px;height:40px}
+.mobile-back{display:none}.logout{background:var(--p2);padding:9px 12px;border-radius:10px}
+@media(max-width:700px){#app{grid-template-columns:1fr}.main{height:100dvh;min-height:0}.main{display:none}.sidebar{border:0}#app.chat-open .sidebar{display:none}#app.chat-open .main{display:flex}.mobile-back{display:inline-block}.side-head{height:58px}.messages{padding:16px 12px}.bubble{max-width:86%}.composer{padding:10px}.topbar{padding:0 10px}}
+
+/* Chattera Premium Profile + refined chat UI */
+body{background:radial-gradient(ellipse at 12% 0%,#29244c 0,transparent 42%),var(--bg)}
+.card,.modal{background:linear-gradient(155deg,#20223b,#17192d 72%);border:1px solid #454365;box-shadow:0 24px 75px #0506118c}
+.logo{background:linear-gradient(135deg,#b7a9ff,#8d75e8 55%,#e0b7ff);color:#17152c;box-shadow:0 8px 24px #a99aff35}
+.primary,.send{background:linear-gradient(135deg,#b7a9ff,#8d75e8);color:#19172d;box-shadow:0 7px 20px #a99aff26}
+.link{color:#c7bdff}
+.field input,.modal input,.search,.compose-input{background:#20223a;border-color:#3b3d5c}
+.field input:focus,.modal input:focus,.search:focus{border-color:var(--lav);box-shadow:0 0 0 3px #a99aff18}
+#app{background:var(--p);box-shadow:0 0 60px #05061135}
+.side-head{background:#191b30}
+.my-profile{margin:12px 12px 4px;padding:14px;border:1px solid #3c3d5d;border-radius:18px;background:linear-gradient(120deg,#282747,#1c1e35);box-shadow:0 10px 30px #07081735}
+.my-profile:hover{background:linear-gradient(120deg,#34315a,#222440)}
+.my-profile .avatar{width:50px;height:50px;border:2px solid #b7a9ff;padding:2px;background:#302d50}
+.my-profile-info small{display:block;margin-top:4px;color:#b7a9ff}
+.chat-item{margin:3px 8px;border-radius:14px;border-bottom:0}
+.chat-item:hover,.chat-item.active{background:#292b49}
+.avatar{background:linear-gradient(135deg,#b7a9ff,#7767c8);color:#201d3c}
+.status-dot{border-color:#191b30}
+.main{background:radial-gradient(ellipse at 50% 0%,#292647 0,#191b30 68%)}
+.topbar,.composer{background:#191b30;border-color:#353653}
+.bubble{background:#2a2d4b;border:1px solid #3a3c5b}
+.bubble.mine{background:linear-gradient(135deg,#7767c8,#6355a9);border-color:#9d8cf1;color:#fff}
+.stamp{color:#ded8ff}
+.modal{border-radius:26px;padding:25px}
+.profile-hero{position:relative;text-align:center;padding:23px 16px 18px;margin:-5px -5px 18px;border-radius:20px;background:radial-gradient(circle at 50% 0%,#4c427b 0,#292746 55%,#20223a 100%);border:1px solid #4a456f}
+.profile-hero .eyebrow{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#c8bdff;font-weight:800}
+.profile-hero h3{font-size:21px;margin:8px 0 4px}
+.profile-hero p{font-size:12px;color:#c1bddf;margin:0}
+.profile-preview{width:92px;height:92px;border:3px solid #c0b4ff;padding:3px;background:#37345b;box-shadow:0 8px 30px #0b0a1c75;margin:14px auto 12px}
+.profile-preview img{border-radius:50%}
+.profile-section-label{display:block;color:#c6c2e5;font-size:12px;font-weight:700;margin:13px 0 7px}
+.profile-bio{width:100%;resize:vertical;min-height:76px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--p2);color:var(--t);font:inherit;outline:0}
+.profile-bio:focus{border-color:var(--lav);box-shadow:0 0 0 3px #a99aff18}
+.profile-hint{font-size:11px;color:#9292b2;margin:6px 0 14px}
+.profile-actions{display:flex;gap:9px;align-items:center}
+.profile-actions .primary{flex:1}
+@media(max-width:700px){.my-profile{margin:10px 10px 2px}.profile-hero{padding:20px 12px 16px}}
+
+
+/* Avatar shape fix: keep every profile photo inside a true circle */
+.my-profile .avatar, #myAvatar, #headAvatar, .chat-item .avatar, .user-result .avatar {
+  width:50px !important; height:50px !important; min-width:50px !important; min-height:50px !important;
+  aspect-ratio:1 / 1 !important; flex:0 0 50px !important; border-radius:50% !important;
+  overflow:hidden !important; box-sizing:border-box !important; padding:2px !important;
+}
+.avatar img, #myAvatar img, #headAvatar img, .chat-item .avatar img, .user-result .avatar img {
+  display:block !important; width:100% !important; height:100% !important;
+  max-width:none !important; max-height:none !important; object-fit:cover !important;
+  object-position:center !important; border-radius:50% !important;
+}
+.profile-preview { width:92px !important; height:92px !important; aspect-ratio:1 / 1 !important;
+  border-radius:50% !important; overflow:hidden !important; box-sizing:border-box !important; padding:3px !important; }
+.profile-preview img { width:100% !important; height:100% !important; object-fit:cover !important;
+  object-position:center !important; border-radius:50% !important; display:block !important; }
+
+.crop-modal{max-width:380px;text-align:center}.crop-help{font-size:13px;color:#c1bddf;line-height:1.5}.crop-modal canvas{width:min(280px,75vw);height:min(280px,75vw);display:block;margin:12px auto;border-radius:50%;border:3px solid #b7a9ff;background:#111326;touch-action:none;cursor:grab}.crop-modal canvas:active{cursor:grabbing}.crop-modal input[type=range]{width:100%;accent-color:#a99aff}.crop-modal .profile-actions{margin-top:12px}
+
+.profile-view-photo{width:126px;height:126px;border-radius:50%;overflow:hidden;border:4px solid #b7a9ff;background:#302d50;margin:4px auto 16px;box-shadow:0 12px 32px #09081780}
+.profile-view-photo img{width:100%;height:100%;display:block;object-fit:cover;object-position:center;border-radius:50%}
+.profile-view-name{text-align:center;font-size:23px;margin:0 0 6px;overflow-wrap:anywhere}
+.profile-view-bio{text-align:center;color:#c5c1e3;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;margin:0 0 12px}
+.profile-view-meta{text-align:center;color:#9292b2;font-size:12px;margin-bottom:16px}
+.profile-view-actions{display:flex;gap:10px}.profile-view-actions button{flex:1}
+#myAvatar,#headAvatar{cursor:pointer}
+
+/* Glassmorphism profile view + tap-to-enlarge photo */
+#profileViewModal, #profileModal {
+  background: rgba(7, 9, 25, .62);
+  -webkit-backdrop-filter: blur(15px);
+  backdrop-filter: blur(15px);
+}
+#profileViewModal .modal, #profileModal .modal {
+  background: linear-gradient(145deg, rgba(54, 52, 91, .78), rgba(20, 23, 43, .82));
+  border: 1px solid rgba(211, 205, 255, .28);
+  box-shadow: 0 24px 80px rgba(4, 5, 18, .58), inset 0 1px rgba(255,255,255,.10);
+  -webkit-backdrop-filter: blur(22px);
+  backdrop-filter: blur(22px);
+}
+#profileViewModal .profile-view-photo {
+  cursor: zoom-in;
+  border: 3px solid rgba(201, 190, 255, .9);
+  box-shadow: 0 0 0 7px rgba(172, 154, 255, .10), 0 15px 42px rgba(7, 5, 25, .55);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+#profileViewModal .profile-view-photo:active { transform: scale(.97); }
+#profileViewModal .profile-view-name { text-shadow: 0 2px 18px rgba(177, 161, 255, .2); }
+#profileViewModal .profile-view-bio {
+  padding: 12px 15px;
+  border: 1px solid rgba(214, 207, 255, .15);
+  border-radius: 16px;
+  background: rgba(255,255,255,.045);
+}
+#profileViewModal .profile-view-actions button {
+  border: 1px solid rgba(223, 216, 255, .18);
+  box-shadow: 0 8px 24px rgba(5, 6, 20, .24);
+}
+.photo-zoom-glass {
+  position: relative;
+  width: min(430px, 92vw);
+  padding: 24px 20px 18px;
+  border-radius: 28px;
+  text-align: center;
+  background: linear-gradient(145deg, rgba(65, 60, 108, .78), rgba(17, 20, 39, .88));
+  border: 1px solid rgba(220, 213, 255, .30);
+  box-shadow: 0 25px 90px rgba(0,0,0,.65), inset 0 1px rgba(255,255,255,.12);
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+}
+.photo-zoom-glass img {
+  display: block; width: min(320px, 75vw); height: min(320px, 75vw);
+  object-fit: contain; margin: 12px auto; border-radius: 22px;
+  background: rgba(5,7,18,.35);
+}
+.photo-zoom-glass p { margin: 10px 0 0; color: #d5ceff; font-size: 12px; letter-spacing: 1.5px; }
+.photo-zoom-close {
+  position: absolute; right: 12px; top: 10px; width: 38px; height: 38px;
+  border-radius: 50%; color: #fff; font-size: 25px;
+  background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.18);
+}
+
+
+/* CHATTERRA ALL-UI GLASSMORPHISM — unified frosted glass surfaces */
+:root{
+  --glass-bg:rgba(38,34,69,.56);
+  --glass-bg-strong:rgba(30,28,56,.76);
+  --glass-edge:rgba(207,198,255,.20);
+  --glass-highlight:rgba(255,255,255,.10);
+  --glass-shadow:0 18px 48px rgba(5,4,22,.34);
+}
+body{
+  background:
+    radial-gradient(ellipse at 12% 8%,rgba(139,112,255,.28),transparent 42%),
+    radial-gradient(ellipse at 88% 88%,rgba(90,170,255,.17),transparent 38%),
+    linear-gradient(135deg,#111326,#1b1935 52%,#101a2b);
+}
+.screen{position:relative;isolation:isolate}
+.screen::before,.screen::after{
+  content:"";position:fixed;z-index:-1;border-radius:50%;filter:blur(45px);
+  pointer-events:none;opacity:.48
+}
+.screen::before{width:210px;height:210px;top:8%;left:5%;background:#7662d9}
+.screen::after{width:190px;height:190px;right:4%;bottom:8%;background:#4b83c5}
+#authScreen .card{
+  position:relative;overflow:hidden;
+  background:linear-gradient(145deg,rgba(67,59,111,.54),rgba(24,24,48,.72));
+  border:1px solid rgba(221,214,255,.25);
+  border-top-color:rgba(255,255,255,.34);
+  box-shadow:0 28px 80px rgba(4,4,20,.48),inset 0 1px 0 rgba(255,255,255,.10);
+  backdrop-filter:blur(24px) saturate(145%);
+  -webkit-backdrop-filter:blur(24px) saturate(145%);
+}
+#authScreen .card::before{
+  content:"";position:absolute;inset:0 0 auto;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.52),transparent);
+  pointer-events:none
+}
+#authScreen .brand{letter-spacing:.2px;text-shadow:0 4px 24px rgba(181,163,255,.22)}
+#authScreen .logo{
+  border:1px solid rgba(255,255,255,.30);
+  background:linear-gradient(135deg,rgba(190,176,255,.92),rgba(120,101,218,.78),rgba(238,195,255,.72));
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)
+}
+.field input,.modal input,.search,.compose-input,.profile-bio,
+#cropZoom,.user-result,.chat-item,.my-profile,.topbar,.composer,
+.side-head,.welcome-card,.iconbtn,.logout,.primary,.send,.link,
+.profile-actions button,.profile-view-actions button{
+  backdrop-filter:blur(16px) saturate(140%);
+  -webkit-backdrop-filter:blur(16px) saturate(140%);
+}
+.field input,.modal input,.search,.compose-input,.profile-bio{
+  background:linear-gradient(145deg,rgba(255,255,255,.085),rgba(133,119,205,.10));
+  border:1px solid rgba(213,204,255,.22);
+  border-top-color:rgba(255,255,255,.27);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 8px 22px rgba(4,4,20,.10);
+}
+.field input:focus,.modal input:focus,.search:focus,.compose-input:focus,.profile-bio:focus{
+  background:rgba(139,119,224,.16);
+  border-color:rgba(194,177,255,.66);
+  box-shadow:0 0 0 3px rgba(169,154,255,.14),0 10px 28px rgba(8,6,28,.18);
+}
+.primary,.send{
+  border:1px solid rgba(255,255,255,.30);
+  background:linear-gradient(135deg,rgba(197,184,255,.94),rgba(137,117,232,.88) 58%,rgba(174,146,255,.90));
+  box-shadow:0 10px 28px rgba(117,94,218,.25),inset 0 1px 0 rgba(255,255,255,.34);
+  transition:transform .16s ease,filter .16s ease,box-shadow .16s ease;
+}
+.primary:active,.send:active{transform:scale(.975);filter:brightness(1.06)}
+.link{border-radius:9px;padding:5px 8px;background:rgba(177,160,255,.08);border:1px solid rgba(194,180,255,.12)}
+#app{
+  background:rgba(23,22,45,.62);
+  border:1px solid rgba(207,198,255,.15);
+  backdrop-filter:blur(22px) saturate(140%);
+  -webkit-backdrop-filter:blur(22px) saturate(140%);
+  box-shadow:0 24px 90px rgba(3,3,18,.42)
+}
+.sidebar,.main{background:rgba(23,22,46,.46)}
+.side-head,.topbar,.composer{
+  background:rgba(34,31,62,.56);
+  border-color:rgba(215,206,255,.15)
+}
+.my-profile,.chat-item,.user-result{
+  background:rgba(255,255,255,.035);
+  border:1px solid rgba(214,205,255,.10);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035);
+}
+.my-profile{background:linear-gradient(125deg,rgba(150,130,255,.18),rgba(255,255,255,.045))}
+.my-profile:hover,.chat-item:hover,.chat-item.active,.user-result:hover{
+  background:linear-gradient(125deg,rgba(166,147,255,.22),rgba(255,255,255,.07));
+  border-color:rgba(210,199,255,.23)
+}
+.chat-item{margin:5px 9px;border-radius:16px}
+.main{background:radial-gradient(ellipse at 50% 0%,rgba(107,91,169,.20),transparent 55%),rgba(18,20,40,.44)}
+.bubble{
+  background:linear-gradient(145deg,rgba(255,255,255,.105),rgba(112,99,171,.18));
+  border:1px solid rgba(218,210,255,.15);
+  box-shadow:0 8px 24px rgba(5,4,20,.12);
+  backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px)
+}
+.bubble.mine{
+  background:linear-gradient(135deg,rgba(151,130,255,.78),rgba(103,88,195,.72));
+  border:1px solid rgba(228,220,255,.30);
+  box-shadow:0 10px 28px rgba(92,73,196,.20)
+}
+.overlay{
+  background:rgba(8,7,24,.60);
+  backdrop-filter:blur(13px);-webkit-backdrop-filter:blur(13px)
+}
+.modal,#profileViewModal .modal,#profileModal .modal{
+  background:linear-gradient(145deg,rgba(61,54,99,.72),rgba(24,23,49,.82));
+  border:1px solid rgba(222,214,255,.25);
+  border-top-color:rgba(255,255,255,.34);
+  box-shadow:0 28px 90px rgba(3,2,18,.54),inset 0 1px 0 rgba(255,255,255,.10);
+  backdrop-filter:blur(28px) saturate(150%);
+  -webkit-backdrop-filter:blur(28px) saturate(150%)
+}
+.profile-hero{
+  background:linear-gradient(145deg,rgba(178,158,255,.20),rgba(255,255,255,.055));
+  border:1px solid rgba(222,214,255,.20);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12)
+}
+.profile-bio,.profile-view-bio{
+  background:rgba(255,255,255,.055);
+  border:1px solid rgba(222,214,255,.16);
+  border-radius:15px
+}
+.profile-preview,.profile-view-photo{
+  box-shadow:0 12px 34px rgba(6,4,24,.32),0 0 0 5px rgba(183,169,255,.08);
+  background:rgba(255,255,255,.08)
+}
+.photo-zoom-glass{
+  background:linear-gradient(145deg,rgba(58,51,95,.76),rgba(16,17,39,.86));
+  border:1px solid rgba(226,218,255,.28);
+  box-shadow:0 30px 100px rgba(0,0,0,.55);
+  backdrop-filter:blur(30px) saturate(150%);
+  -webkit-backdrop-filter:blur(30px) saturate(150%)
+}
+.logout,.iconbtn{
+  background:rgba(255,255,255,.065);
+  border:1px solid rgba(215,205,255,.14);
+}
+.logout:hover,.iconbtn:hover{background:rgba(181,164,255,.16)}
+.notice.error{background:rgba(193,72,95,.22);border:1px solid rgba(255,166,183,.25);backdrop-filter:blur(12px)}
+.notice.ok{background:rgba(61,183,137,.16);border:1px solid rgba(142,255,211,.22);backdrop-filter:blur(12px)}
+@media(max-width:700px){
+  #authScreen .card{padding:23px 20px;border-radius:25px}
+  #app{border-radius:0}
+}
+@media(prefers-reduced-motion:reduce){
+  .primary,.send{transition:none}
+}
+
+
+/* Reply-to message: compact glass controls */
+.reply-preview{display:flex;align-items:center;gap:10px;margin:0 14px 8px;padding:10px 13px;border:1px solid rgba(190,177,255,.27);border-left:3px solid #b7a9ff;border-radius:15px;background:linear-gradient(120deg,rgba(137,119,255,.18),rgba(255,255,255,.055));backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 8px 26px rgba(7,5,25,.16)}
+.reply-preview[hidden]{display:none!important}.reply-preview-copy{min-width:0;display:flex;flex:1;flex-direction:column;gap:3px}.reply-preview-copy strong{font-size:12px;color:#c9bdff}.reply-preview-copy span{font-size:12px;color:#d8d4ef;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.reply-cancel{width:30px;height:30px;border:1px solid rgba(255,255,255,.16);border-radius:50%;background:rgba(255,255,255,.07);color:#fff;font-size:20px;cursor:pointer}
+.bubble{position:relative}.reply-quote{display:block;margin:0 0 7px;padding:7px 9px;border-left:2px solid #b8a9ff;border-radius:8px;background:rgba(165,148,255,.12);color:#d4cef4;font-size:12px;overflow-wrap:anywhere}.reply-quote strong{display:block;color:#c9bdff;font-size:11px;margin-bottom:2px}.reply-action{display:block;margin:5px 0 0 auto;padding:3px 8px;border:1px solid rgba(255,255,255,.13);border-radius:9px;background:rgba(255,255,255,.06);color:#c7c0ed;font-size:10px;cursor:pointer}.reply-action:active{transform:scale(.96)}
+
+
+/* Ultimate message controls + pinned glass banner */
+.pinned-banner{margin:9px 14px 0;padding:10px 13px;border:1px solid rgba(214,199,255,.24);border-radius:14px;background:linear-gradient(120deg,rgba(151,128,255,.18),rgba(255,255,255,.05));color:#e8e1ff;font-size:12px;backdrop-filter:blur(16px)}
+.pinned-banner[hidden]{display:none!important}.message-tools{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px;margin-top:6px}.message-tools button{padding:4px 8px;border:1px solid rgba(220,211,255,.16);border-radius:9px;background:rgba(255,255,255,.065);color:#dcd5ff;font-size:10px}.message-tools button:active{transform:scale(.96)}
+/* Message reactions — compact frosted glass emoji chips */
+.reaction-row{display:flex;flex-wrap:wrap;gap:5px;margin:7px 0 1px;max-width:100%}
+.reaction-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:999px;border:1px solid rgba(220,211,255,.18);background:rgba(255,255,255,.075);color:#eeeaff;font-size:12px;line-height:1.2;cursor:pointer;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);transition:background .15s,border-color .15s,transform .15s}
+.reaction-chip.mine{background:rgba(167,145,255,.24);border-color:rgba(197,181,255,.58);box-shadow:inset 0 1px rgba(255,255,255,.12)}
+.reaction-chip:active{transform:scale(.94)}.reaction-chip .reaction-count{font-size:11px;color:#d9d2f4}
+
+
+/* Telegram-inspired long-press message actions */
+.bubble{touch-action:pan-y;cursor:pointer}
+.bubble.selected-message{outline:2px solid rgba(205,190,255,.78);box-shadow:0 0 0 9999px rgba(5,5,20,.18),0 12px 34px rgba(0,0,0,.24);z-index:4}
+#messageMenu{position:fixed;z-index:30;display:none;width:min(330px,calc(100vw - 28px));padding:10px;border:1px solid rgba(225,217,255,.28);border-radius:22px;background:linear-gradient(145deg,rgba(48,45,82,.97),rgba(22,24,47,.98));box-shadow:0 22px 70px rgba(0,0,0,.55),inset 0 1px rgba(255,255,255,.13);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+#messageMenu.show{display:block;animation:menuIn .15s ease-out}@keyframes menuIn{from{opacity:0;transform:translateY(7px) scale(.98)}to{opacity:1;transform:none}}
+.menu-reactions{display:flex;justify-content:space-between;gap:3px;padding:3px 2px 10px;border-bottom:1px solid rgba(255,255,255,.12)}
+.menu-reactions button{width:39px;height:39px;border-radius:50%;background:rgba(255,255,255,.07);font-size:23px;border:1px solid transparent}.menu-reactions button:active{transform:scale(1.15);background:rgba(183,169,255,.25)}
+.menu-actions{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding-top:8px}.menu-actions button{display:flex;align-items:center;gap:10px;text-align:left;padding:11px 10px;border-radius:12px;background:transparent;color:#f0edff;font-size:14px}.menu-actions button:hover{background:rgba(255,255,255,.09)}.menu-actions button span{width:22px;text-align:center;font-size:17px}.menu-actions button.danger{color:#ffb7c1}
+.reaction-row{display:flex;flex-wrap:wrap;gap:5px;margin:7px 0 1px;max-width:100%}.reaction-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:999px;border:1px solid rgba(220,211,255,.18);background:rgba(255,255,255,.075);color:#eeeaff;font-size:12px;line-height:1.2;cursor:pointer;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}.reaction-chip.mine{background:rgba(167,145,255,.24);border-color:rgba(197,181,255,.58)}.reaction-chip .reaction-count{font-size:11px;color:#d9d2f4}
+@media(max-width:700px){#messageMenu{bottom:calc(74px + env(safe-area-inset-bottom));left:14px!important;right:14px;width:auto;top:auto!important}.bubble.selected-message{z-index:20}}
+
+
+/* Telegram-style swipe-to-reply */
+.bubble{
+  touch-action:pan-y;
+  transition:transform .16s ease, box-shadow .16s ease;
+  will-change:transform;
+}
+.bubble.swipe-ready{
+  box-shadow:0 10px 30px rgba(169,154,255,.20);
+}
+@media(prefers-reduced-motion:reduce){
+  .bubble{transition:none}
+}
+
+</style>
+</head>
+<body>
+<section class="screen" id="authScreen"><main class="card">
+<div class="brand"><div class="logo">✦</div>Chattera</div><p class="sub" id="subtitle">သင့်ရဲ့ ကိုယ်ပိုင် Chat Account ကို ဖန်တီးလိုက်ပါ။</p>
+<div id="notice" class="notice"></div>
+<form id="authForm">
+<div class="field" id="nameField"><label for="displayName">Name</label><input id="displayName" maxlength="40" placeholder="သင့်နာမည်" autocomplete="name"></div>
+<div class="field"><label for="email">Email</label><input id="email" type="email" placeholder="name@example.com" autocomplete="email" required></div>
+<div class="field"><label for="password">Password</label><input id="password" type="password" placeholder="အနည်းဆုံး ၆ လုံး" minlength="6" required></div>
+<button class="primary wide" id="submitBtn">Create account</button></form>
+<p class="switch" id="switchLine">Account ရှိပြီးသားလား။ <button class="link" id="switchMode" type="button">Login ဝင်ရန်</button></p>
+<p class="switch" id="forgotLine" style="display:none"><button class="link" id="forgotBtn" type="button">Password မေ့နေပါသလား?</button></p>
+<p class="small">Password ကို မည်သူ့ကိုမျှ မမျှဝေပါနှင့်။ Chattera သည် Firebase Authentication နှင့် Cloud Firestore ကို အသုံးပြုသည်။</p>
+</main></section>
+<div id="app">
+<aside class="sidebar">
+<header class="side-head"><div class="brand"><div class="logo">✦</div>Chattera</div><button class="iconbtn" id="newChat" title="New chat">＋</button></header>
+<button class="my-profile" id="profileBtn" type="button"><div class="avatar" id="myAvatar">👤</div><div class="my-profile-info"><strong id="myName">My Profile</strong><small id="myProfileSub">Profile · ပြင်ဆင်ရန်</small></div><span aria-hidden="true">›</span></button><div class="search-wrap"><input class="search" id="search" placeholder="🔎  Chat တွေ ရှာရန်..." autocomplete="off"></div>
+<div class="chat-list" id="chatList"><div class="empty">Chat များကို ဖွင့်နေသည်...</div></div>
+</aside>
+<main class="main">
+<section class="welcome" id="welcome"><div class="welcome-card"><div class="big">✦</div><h2>Welcome to Chattera</h2><p>ဘယ်ဘက်က Chat ကို ရွေးပါ၊ ဒါမှမဟုတ် ＋ ကိုနှိပ်ပြီး လူသစ်တစ်ယောက်နဲ့ စကားစပါ။</p></div></section>
+<section class="conversation" id="conversation">
+<header class="topbar"><button class="iconbtn mobile-back" id="back">‹</button><div class="avatar" id="headAvatar">👤</div><div class="person"><strong id="headName">Chat</strong><small id="headStatus" class="status-label">Offline</small></div><button class="logout" id="logoutBtn">Logout</button></header>
+<div class="pinned-banner" id="pinnedBanner" hidden></div><div class="messages" id="messages"></div>
+<div class="reply-preview" id="replyPreview" hidden><div class="reply-preview-copy"><strong id="replyPreviewName">Replying</strong><span id="replyPreviewText"></span></div><button type="button" class="reply-cancel" id="cancelReply" aria-label="Cancel reply">×</button></div><form class="composer" id="sendForm"><input class="compose-input" id="messageInput" placeholder="Message..." autocomplete="off" maxlength="5000"><button class="send" aria-label="Send">➤</button></form>
+</section></main></div>
+<div class="overlay" id="modal"><section class="modal"><h3>လူသစ်တစ်ယောက်နဲ့ Chat စမယ်</h3><input id="userSearch" placeholder="နာမည် သို့မဟုတ် Email ရှာရန်"><div id="userResults"><div class="empty">အသုံးပြုသူများကို ရှာနေသည်...</div></div><p class="switch"><button class="link" id="closeModal" type="button">ပိတ်ရန်</button></p></section></div>
+<div class="overlay" id="profileModal"><section class="modal">
+<div class="profile-hero"><div class="eyebrow">YOUR SPACE · CHATTERA</div><div class="profile-preview" id="profilePreview">👤</div><h3>ကိုယ်ပိုင် Profile</h3><p>သင့်အကောင့်ကို ကိုယ်ပိုင်စတိုင်နဲ့ ဖော်ပြပါ</p></div>
+<label class="profile-section-label" for="profilePhoto">PROFILE PHOTO</label><input id="profilePhoto" type="file" accept="image/*">
+<label class="profile-section-label" for="profileName">DISPLAY NAME</label><input id="profileName" maxlength="40" placeholder="သင့်နာမည်">
+<label class="profile-section-label" for="profileBio">BIO · သင့်အကြောင်းတိုတို</label><textarea class="profile-bio" id="profileBio" maxlength="140" placeholder="ဥပမာ — စကားပြောရတာ ကြိုက်တယ် ✨"></textarea><p class="profile-hint">စာလုံး ၁၄၀ အထိ · အခြားသူတွေကလည်း မြင်နိုင်ပါတယ်</p>
+<div id="profileNotice" class="notice"></div><div class="profile-actions"><button class="primary" id="saveProfile" type="button">Save Profile</button><button class="logout" id="closeProfile" type="button">ပိတ်ရန်</button></div>
+</section></div>
+<div class="overlay" id="profileViewModal"><section class="modal">
+<div class="profile-view-photo" id="viewProfilePhoto">👤</div>
+<h2 class="profile-view-name" id="viewProfileName">Profile</h2>
+<p class="profile-view-bio" id="viewProfileBio"></p>
+<div class="profile-view-meta" id="viewProfileMeta"></div>
+<div class="profile-view-actions"><button class="primary" id="viewEditProfile" type="button">Edit Profile</button><button class="logout" id="closeProfileView" type="button">Close</button></div>
+</section></div>
+
+
+<div class="overlay" id="photoZoomModal" aria-label="Profile photo enlarged">
+  <section class="photo-zoom-glass" role="dialog" aria-modal="true">
+    <button class="photo-zoom-close" id="closePhotoZoom" type="button" aria-label="Close photo">×</button>
+    <img id="zoomedProfilePhoto" alt="Enlarged profile photo">
+    <p>Profile Photo</p>
+  </section>
+</div>
+
+<div class="overlay" id="cropModal"><section class="modal crop-modal"><h3>Profile ပုံ Crop လုပ်ရန်</h3><p class="crop-help">ပုံကို လက်နဲ့ရွှေ့ပြီး Zoom ကိုညှိပါ။ အဝိုင်းထဲမှာ မြင်ရမယ့်နေရာကို ရွေးနိုင်ပါတယ်။</p><canvas id="cropCanvas" width="300" height="300" aria-label="Crop preview"></canvas><label class="profile-section-label" for="cropZoom">Zoom</label><input id="cropZoom" type="range" min="1" max="3" step="0.05" value="1"><div class="profile-actions"><button class="primary" id="applyCrop" type="button">ဒီ Crop ကိုသုံးမယ်</button><button class="logout" id="cancelCrop" type="button">မလုပ်တော့</button></div></section></div>
+
+
+<div id="messageMenu" role="dialog" aria-label="Message actions">
+  <div class="menu-reactions" id="menuReactions"><button type="button" data-emoji="😂">😂</button><button type="button" data-emoji="😍">😍</button><button type="button" data-emoji="😮">😮</button><button type="button" data-emoji="😢">😢</button><button type="button" data-emoji="❤️">❤️</button><button type="button" data-emoji="👍">👍</button><button type="button" data-emoji="👎">👎</button></div>
+  <div class="menu-actions"><button type="button" data-action="reply"><span>↩</span>Reply</button><button type="button" data-action="copy"><span>▢</span>Copy</button><button type="button" data-action="forward"><span>➦</span>Forward</button><button type="button" data-action="pin"><span>📌</span>Pin</button><button type="button" data-action="edit"><span>✏️</span>Edit</button><button type="button" class="danger" data-action="delete"><span>🗑</span>Delete</button>
+  </div>
+</div>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import {getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,onAuthStateChanged,signOut,updateProfile,sendPasswordResetEmail} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import {getFirestore,doc,setDoc,serverTimestamp,collection,query,where,onSnapshot,getDocs,addDoc,orderBy,updateDoc,deleteDoc,deleteField} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+const firebaseConfig={apiKey:"AIzaSyBOF85KMDzjAQ8EyRVSERYGuBL3XllnzVc",authDomain:"chattera-4d376.firebaseapp.com",projectId:"chattera-4d376",storageBucket:"chattera-4d376.firebasestorage.app",messagingSenderId:"788081158781",appId:"1:788081158781:web:ee4645be761a5e794f5f14"};
+const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
+let mode="register",currentUser=null,users=[],chats=[],activeChatId=null,unsubChats=null,unsubMessages=null,unsubUsers=null,presenceTimer=null,profilePhotoFile=null,replyDraft=null;
+function notice(msg,type="error"){$("notice").textContent=msg;$("notice").className="notice "+type}
+function clearNotice(){$("notice").textContent="";$("notice").className="notice"}
+function errorText(e){const m={"auth/email-already-in-use":"ဒီ Email နဲ့ Account ရှိပြီးသားပါ။ Login ဝင်ကြည့်ပါ။","auth/invalid-email":"Email လိပ်စာ မှန်ကန်မှုမရှိပါ။","auth/weak-password":"Password ကို အနည်းဆုံး ၆ လုံး ထည့်ပါ။","auth/invalid-credential":"Email သို့မဟုတ် Password မှားနေပါတယ်။","auth/user-not-found":"ဒီ Email နဲ့ Account မတွေ့ပါ။","auth/wrong-password":"Password မှားနေပါတယ်။","auth/network-request-failed":"Internet ချိတ်ဆက်မှုကို စစ်ဆေးပါ။"};return m[e.code]||e.message||"လုပ်ဆောင်မှု မအောင်မြင်ပါ။"}
+function setMode(next){mode=next;clearNotice();const reg=mode==="register";$("nameField").style.display=reg?"block":"none";$("subtitle").textContent=reg?"သင့်ရဲ့ ကိုယ်ပိုင် Chat Account ကို ဖန်တီးလိုက်ပါ။":"Chattera Account ထဲကို Login ဝင်ပါ။";$("submitBtn").textContent=reg?"Create account":"Login";$("switchLine").innerHTML=reg?'Account ရှိပြီးသားလား။ <button class="link" id="switchMode" type="button">Login ဝင်ရန်</button>':'Account မရှိသေးဘူးလား။ <button class="link" id="switchMode" type="button">Register လုပ်ရန်</button>';$("switchMode").onclick=()=>setMode(reg?"login":"register");$("forgotLine").style.display=reg?"none":"block"}
+$("switchMode").onclick=()=>setMode("login");
+$("forgotBtn").onclick=async()=>{const email=$("email").value.trim();if(!email)return notice("Password reset လုပ်ရန် Email ကို အရင်ထည့်ပါ။");try{await sendPasswordResetEmail(auth,email);notice("Password reset email ပို့ပြီးပါပြီ။ Inbox ကိုစစ်ပါ။","ok")}catch(e){notice(errorText(e))}};
+$("authForm").addEventListener("submit",async e=>{e.preventDefault();clearNotice();$("submitBtn").disabled=true;try{const email=$("email").value.trim(),password=$("password").value;if(mode==="register"){const name=$("displayName").value.trim();if(!name)throw new Error("နာမည်ထည့်ပေးပါ။");const cred=await createUserWithEmailAndPassword(auth,email,password);await updateProfile(cred.user,{displayName:name});await setDoc(doc(db,"users",cred.user.uid),{uid:cred.user.uid,displayName:name,email:cred.user.email,createdAt:serverTimestamp()})}else{await signInWithEmailAndPassword(auth,email,password)}}catch(e){notice(e.code==="permission-denied"?"Firestore Rules ကြောင့် Profile သိမ်းဆည်းခွင့် မရပါ။ Rules ကို ပြန်စစ်ပါ။":errorText(e))}finally{$("submitBtn").disabled=false}});
+function otherUid(chat){return chat.participants.find(uid=>uid!==currentUser.uid)}
+function userInfo(uid){return users.find(u=>u.uid===uid)||{uid,displayName:"Chattera User",email:"",photoURL:""}}
+function setAvatar(el,user){el.innerHTML="";if(user&&user.photoURL){const img=document.createElement("img");img.src=user.photoURL;img.alt="";el.append(img)}else{el.textContent="👤"}}
+function renderMyProfile(){if(!currentUser)return;const me=userInfo(currentUser.uid);$("myName").textContent=me.displayName||currentUser.displayName||"My Profile";const sub=$("myProfileSub");if(sub)sub.textContent=me.bio||"Profile · ပြင်ဆင်ရန်";setAvatar($("myAvatar"),me)}
+function timeLabel(ts){if(!ts)return "";const d=ts.toDate?ts.toDate():new Date(ts);return d.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}
+function renderChats(){const q=$("search").value.trim().toLowerCase(),list=chats.filter(c=>{const u=userInfo(otherUid(c));return (u.displayName||"").toLowerCase().includes(q)||(u.email||"").toLowerCase().includes(q)});$("chatList").innerHTML="";if(!list.length){$("chatList").innerHTML='<div class="empty">Chat မရှိသေးပါ။ ＋ ကိုနှိပ်ပြီး စတင်ပါ။</div>';return}list.forEach(c=>{const u=userInfo(otherUid(c)),el=document.createElement("div");el.className="chat-item"+(c.id===activeChatId?" active":"");el.innerHTML='<div class="avatar-wrap"><div class="avatar"></div><span class="status-dot"></span></div><div class="chat-info"><div class="chat-top"><span class="chat-name"></span><span class="time"></span></div><div class="preview"></div></div>';setAvatar(el.querySelector(".avatar"),u);el.querySelector(".avatar").style.cursor="pointer";el.querySelector(".avatar").onclick=e=>{e.stopPropagation();openProfileView(u)};el.querySelector(".status-dot").classList.toggle("online",isOnline(u));el.querySelector(".chat-name").textContent=u.displayName||u.email||"User";el.querySelector(".time").textContent=timeLabel(c.updatedAt);el.querySelector(".preview").textContent=c.lastMessage||"စကားစတင်ရန် နှိပ်ပါ";el.onclick=()=>openChat(c.id);$("chatList").append(el)})}
+function listenChats(){if(unsubChats)unsubChats();const q=query(collection(db,"chats"),where("participants","array-contains",currentUser.uid));unsubChats=onSnapshot(q,snap=>{chats=snap.docs.map(d=>({id:d.id,...d.data()}));chats.sort((a,b)=>(b.updatedAt?.seconds||0)-(a.updatedAt?.seconds||0));renderChats()},e=>alert("Chat list error: "+errorText(e)))}
+function lastSeenDate(user){const ts=user&&user.lastSeen;if(!ts)return null;return ts.toDate?ts.toDate():new Date(ts)}
+function isOnline(user){const d=lastSeenDate(user);return user&&user.online===true&&!!d&&(Date.now()-d.getTime()<90000)}
+function lastSeenLabel(user){const d=lastSeenDate(user);if(!d)return "Offline";const mins=Math.max(1,Math.floor((Date.now()-d.getTime())/60000));if(mins<2)return "Last seen just now";if(mins<60)return "Last seen "+mins+" min ago";return "Last seen "+d.toLocaleString([],{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"})}
+function listenUsers(){if(unsubUsers)unsubUsers();unsubUsers=onSnapshot(collection(db,"users"),snap=>{users=snap.docs.map(d=>({uid:d.id,...d.data()}));renderMyProfile();renderChats();if(activeChatId){const c=chats.find(x=>x.id===activeChatId);if(c)renderHeadStatus(userInfo(otherUid(c))) }},e=>console.error("Users listener:",e));}
+function renderHeadStatus(user){const el=$("headStatus");if(!el||!user)return;if(isOnline(user)){el.textContent="● Online";el.className="status-label online-text"}else{el.textContent="○ "+lastSeenLabel(user);el.className="status-label"}}
+async function heartbeat(){if(!currentUser)return;try{await updateDoc(doc(db,"users",currentUser.uid),{online:true,lastSeen:serverTimestamp()})}catch(e){console.warn("Presence update:",e)}}
+function startPresence(){if(presenceTimer)clearInterval(presenceTimer);heartbeat();presenceTimer=setInterval(heartbeat,45000);document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")heartbeat()},{once:true})}
+function stopPresence(){if(presenceTimer){clearInterval(presenceTimer);presenceTimer=null}}
+function setReplyDraft(message){replyDraft={text:String(message.text||"").slice(0,240),sender:message.senderId===currentUser.uid?"You":(userInfo(message.senderId).displayName||"User")};$("replyPreviewName").textContent=replyDraft.sender;$("replyPreviewText").textContent=replyDraft.text;$("replyPreview").hidden=false;$("messageInput").focus()}
+function clearReplyDraft(){replyDraft=null;$("replyPreview").hidden=true;$("replyPreviewText").textContent=""}
+$("cancelReply").onclick=clearReplyDraft;
+let selectedMessage=null,selectedBubble=null,longPressTimer=null,longPressTriggered=false;
+const menu=$("messageMenu");
+function closeMessageMenu(){menu.classList.remove("show");if(selectedBubble)selectedBubble.classList.remove("selected-message");selectedBubble=null;selectedMessage=null}
+function openMessageMenu(bubble,chatId,messageId,message,clientX,clientY){closeMessageMenu();selectedBubble=bubble;selectedMessage={chatId,messageId,message};bubble.classList.add("selected-message");menu.classList.add("show");if(window.matchMedia("(max-width:700px)").matches){menu.style.left="14px";menu.style.top="auto"}else{const w=menu.offsetWidth||330,h=menu.offsetHeight||170;menu.style.left=Math.max(12,Math.min(clientX-w/2,innerWidth-w-12))+"px";menu.style.top=Math.max(12,Math.min(clientY-h-12,innerHeight-h-12))+"px"}}
+async function setMessageReaction(emoji){if(!selectedMessage||!currentUser)return;const {chatId,messageId,message}=selectedMessage;const old=(message.reactions||{})[currentUser.uid];const patch={};patch["reactions."+currentUser.uid]=old===emoji?deleteField():emoji;try{await updateDoc(doc(db,"chats",chatId,"messages",messageId),patch)}catch(err){alert("Reaction မပေးနိုင်ပါ: "+errorText(err))}closeMessageMenu()}
+$("menuReactions").addEventListener("click",e=>{const b=e.target.closest("button[data-emoji]");if(b)setMessageReaction(b.dataset.emoji)});
+menu.addEventListener("click",async e=>{const button=e.target.closest("button[data-action]");if(!button||!selectedMessage)return;const {chatId,messageId,message}=selectedMessage,action=button.dataset.action;closeMessageMenu();
+ if(action==="reply"){setReplyDraft(message);return}
+ if(action==="copy"){try{await navigator.clipboard.writeText(String(message.text||""));alert("စာကို Copy လုပ်ပြီးပါပြီ။")}catch(err){const ta=document.createElement("textarea");ta.value=String(message.text||"");document.body.append(ta);ta.select();try{document.execCommand("copy");alert("စာကို Copy လုပ်ပြီးပါပြီ။")}catch(_){alert("Copy မလုပ်နိုင်ပါ။")}ta.remove()}return}
+ if(action==="forward"){const targets=chats.filter(c=>c.id!==chatId);if(!targets.length){alert("Forward လုပ်ဖို့ အခြား Chat မရှိသေးပါ။");return}const choices=targets.map((c,i)=>`${i+1}. ${userInfo(otherUid(c)).displayName||userInfo(otherUid(c)).email||"User"}`).join("\n");const answer=prompt("ဘယ် Chat ဆီ Forward လုပ်မလဲ။ နံပါတ်ရွေးပါ။\n"+choices);if(answer===null)return;const index=Number(answer)-1;if(!Number.isInteger(index)||index<0||index>=targets.length){alert("နံပါတ်မှန်မှန်ရွေးပါ။");return}try{const target=targets[index];await addDoc(collection(db,"chats",target.id,"messages"),{senderId:currentUser.uid,text:String(message.text||""),forwarded:true,createdAt:serverTimestamp()});await updateDoc(doc(db,"chats",target.id),{lastMessage:"Forwarded: "+String(message.text||"").slice(0,120),updatedAt:serverTimestamp()});alert("Forward ပို့ပြီးပါပြီ။")}catch(err){alert("Forward မလုပ်နိုင်ပါ: "+errorText(err))}return}
+ if(action==="pin"){const chatNow=chats.find(c=>c.id===chatId)||{};const unpin=chatNow.pinnedMessageId===messageId;try{await updateDoc(doc(db,"chats",chatId),{pinnedMessageId:unpin?deleteField():messageId})}catch(err){alert("Pin မလုပ်နိုင်ပါ: "+errorText(err))}return}
+ if(action==="edit"){if(message.senderId!==currentUser.uid)return;const next=prompt("စာကို ပြင်ဆင်ပါ",message.text||"");if(next===null)return;const value=next.trim();if(!value)return alert("စာအလွတ် မဖြစ်ရပါ။");try{await updateDoc(doc(db,"chats",chatId,"messages",messageId),{text:value})}catch(err){alert("ပြင်ဆင်မရပါ: "+errorText(err))}return}
+ if(action==="delete"){if(message.senderId!==currentUser.uid){alert("ကိုယ်ပို့ထားတဲ့စာကိုသာ ဖျက်နိုင်ပါတယ်။");return}if(!confirm("ဒီစာကို ဖျက်မှာ သေချာပါသလား။"))return;try{await deleteDoc(doc(db,"chats",chatId,"messages",messageId));const c=chats.find(x=>x.id===chatId);if(c&&c.pinnedMessageId===messageId)await updateDoc(doc(db,"chats",chatId),{pinnedMessageId:deleteField()})}catch(err){alert("ဖျက်မရပါ: "+errorText(err))}}
+});
+document.addEventListener("pointerdown",e=>{if(menu.classList.contains("show")&&!menu.contains(e.target)&&!e.target.closest(".bubble"))closeMessageMenu()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMessageMenu()});
+function openChat(id){activeChatId=id;const c=chats.find(x=>x.id===id);if(!c)return;const u=userInfo(otherUid(c));$("headName").textContent=u.displayName||u.email||"User";setAvatar($("headAvatar"),u);renderHeadStatus(u);$("welcome").style.display="none";$("conversation").style.display="flex";$("app").classList.add("chat-open");renderChats();if(unsubMessages)unsubMessages();$("messages").innerHTML='<div class="empty">Messages ဖွင့်နေသည်...</div>';const chatId=id;const mq=query(collection(db,"chats",id,"messages"),orderBy("createdAt","asc"));unsubMessages=onSnapshot(mq,snap=>{if(activeChatId!==chatId)return;const box=$("messages");box.innerHTML="";const chatNow=chats.find(x=>x.id===chatId)||{};const pinned=snap.docs.find(x=>x.id===chatNow.pinnedMessageId);const banner=$("pinnedBanner");if(pinned){banner.hidden=false;banner.textContent="📌 Pinned: "+String(pinned.data().text||"Message").slice(0,180)}else{banner.hidden=true;banner.textContent=""}
+snap.forEach(d=>{const m=d.data(),b=document.createElement("div");b.className="bubble"+(m.senderId===currentUser.uid?" mine":"");
+let swipeStart=null;
+b.addEventListener("pointerdown",e=>{
+  if(e.target.closest("button")||e.button!==0)return;
+  swipeStart={x:e.clientX,y:e.clientY};
+  b.classList.add("swipe-ready");
+});
+b.addEventListener("pointermove",e=>{
+  if(!swipeStart)return;
+  const dx=e.clientX-swipeStart.x,dy=e.clientY-swipeStart.y;
+  if(dx>8&&Math.abs(dx)>Math.abs(dy)*1.2)b.style.transform="translateX("+Math.min(dx*.32,38)+"px)";
+});
+b.addEventListener("pointerup",e=>{
+  if(!swipeStart)return;
+  const dx=e.clientX-swipeStart.x,dy=e.clientY-swipeStart.y;
+  swipeStart=null;b.classList.remove("swipe-ready");b.style.transform="";
+  if(dx>65&&Math.abs(dx)>Math.abs(dy)*1.3)setReplyDraft(m);
+});
+b.addEventListener("pointercancel",()=>{
+  swipeStart=null;b.classList.remove("swipe-ready");b.style.transform="";
+});if(m.replyText){const quote=document.createElement("div");quote.className="reply-quote";const who=document.createElement("strong");who.textContent=m.replySender||"Reply";const qtext=document.createElement("span");qtext.textContent=m.replyText;quote.append(who,qtext);b.append(quote)}if(m.forwarded){const f=document.createElement("div");f.className="stamp";f.textContent="➦ Forwarded";b.append(f)}const t=document.createElement("span");t.textContent=m.text||"";b.append(t);if(m.editedAt){const edited=document.createElement("span");edited.className="stamp";edited.textContent="edited";b.append(edited)}const stamp=document.createElement("span");stamp.className="stamp";stamp.textContent=timeLabel(m.createdAt);b.append(stamp);
+const reactions=m.reactions&&typeof m.reactions==="object"?m.reactions:{};const counts={};Object.values(reactions).forEach(emoji=>{counts[emoji]=(counts[emoji]||0)+1});const reactionRow=document.createElement("div");reactionRow.className="reaction-row";Object.keys(counts).forEach(emoji=>{const chip=document.createElement("button");chip.type="button";chip.className="reaction-chip"+(reactions[currentUser.uid]===emoji?" mine":"");chip.textContent=emoji+" "+counts[emoji];chip.onclick=async()=>{const patch={};patch["reactions."+currentUser.uid]=reactions[currentUser.uid]===emoji?deleteField():emoji;try{await updateDoc(doc(db,"chats",chatId,"messages",d.id),patch)}catch(err){alert("Reaction မပြောင်းနိုင်ပါ: "+errorText(err))}};reactionRow.append(chip)});if(Object.keys(counts).length)b.append(reactionRow);
+let startX=0,startY=0;b.addEventListener("pointerdown",e=>{if(e.target.closest("button"))return;longPressTriggered=false;startX=e.clientX;startY=e.clientY;clearTimeout(longPressTimer);longPressTimer=setTimeout(()=>{longPressTriggered=true;openMessageMenu(b,chatId,d.id,m,e.clientX,e.clientY)},520)});b.addEventListener("pointermove",e=>{if(Math.abs(e.clientX-startX)>10||Math.abs(e.clientY-startY)>10)clearTimeout(longPressTimer)});for(const ev of ["pointerup","pointercancel","pointerleave"])b.addEventListener(ev,()=>clearTimeout(longPressTimer));b.addEventListener("contextmenu",e=>{e.preventDefault();openMessageMenu(b,chatId,d.id,m,e.clientX,e.clientY)});box.append(b)});box.scrollTop=box.scrollHeight},e=>alert("Message error: "+errorText(e)))}
+async function startChat(target){if(target.uid===currentUser.uid)return;const existing=chats.find(c=>c.participants.includes(target.uid));if(existing){$("modal").classList.remove("show");openChat(existing.id);return}try{const ref=await addDoc(collection(db,"chats"),{participants:[currentUser.uid,target.uid],createdAt:serverTimestamp(),updatedAt:serverTimestamp(),lastMessage:""});$("modal").classList.remove("show");openChat(ref.id)}catch(e){alert("Chat စတင်မရပါ: "+errorText(e))}}
+$("newChat").onclick=()=>{$("modal").classList.add("show");$("userSearch").value="";renderUserResults();$("userSearch").focus()};
+$("closeModal").onclick=()=>$("modal").classList.remove("show");
+function renderUserResults(){const q=$("userSearch").value.trim().toLowerCase(),found=users.filter(u=>u.uid!==currentUser.uid&&((u.displayName||"").toLowerCase().includes(q)||(u.email||"").toLowerCase().includes(q)));$("userResults").innerHTML="";if(!found.length){$("userResults").innerHTML='<div class="empty">အသုံးပြုသူ မတွေ့ပါ။ အခြားသူတစ်ယောက် Account ဖွင့်ပြီးမှ ဒီမှာ ပေါ်လာပါမယ်။</div>';return}found.forEach(u=>{const el=document.createElement("div");el.className="user-result";el.innerHTML='<div class="avatar-wrap"><div class="avatar"></div><span class="status-dot"></span></div><div class="chat-info"><strong class="user-name"></strong><div class="preview user-email"></div></div>';setAvatar(el.querySelector(".avatar"),u);el.querySelector(".avatar").style.cursor="pointer";el.querySelector(".avatar").onclick=e=>{e.stopPropagation();openProfileView(u)};el.querySelector(".user-name").textContent=u.displayName||"User";el.querySelector(".user-email").textContent=u.email||"";el.onclick=()=>startChat(u);$("userResults").append(el)})}
+$("userSearch").addEventListener("input",renderUserResults);$("search").addEventListener("input",renderChats);
+function openEditProfile(){const me=userInfo(currentUser.uid);$("profileName").value=me.displayName||currentUser.displayName||"";$("profileBio").value=me.bio||"";$("profilePhoto").value="";profilePhotoFile=null,replyDraft=null;$("profilePreview").innerHTML="";if(me.photoURL){const img=document.createElement("img");img.src=me.photoURL;$("profilePreview").append(img)}else{$("profilePreview").textContent="👤"}$("profileNotice").className="notice";$("profileNotice").textContent="";$("profileModal").classList.add("show")}
+function openProfileView(user){if(!user)return;const target=user.uid===currentUser.uid?userInfo(currentUser.uid):user;const photo=$("viewProfilePhoto");photo.innerHTML="";if(target.photoURL){const img=document.createElement("img");img.src=target.photoURL;img.alt="Profile photo";photo.append(img)}else{photo.textContent="👤"}$("viewProfileName").textContent=target.displayName||target.email||"Chattera User";$("viewProfileBio").textContent=target.bio||"Bio မထည့်ရသေးပါ။";$("viewProfileMeta").textContent=target.uid===currentUser.uid?"Your Profile":"Chattera Profile";$("viewEditProfile").style.display=target.uid===currentUser.uid?"block":"none";$("profileViewModal").classList.add("show")}
+$("profileBtn").onclick=()=>openProfileView(userInfo(currentUser.uid));
+$("myAvatar").onclick=e=>{e.stopPropagation();openProfileView(userInfo(currentUser.uid))};
+$("headAvatar").onclick=()=>{if(activeChatId){const c=chats.find(x=>x.id===activeChatId);if(c)openProfileView(userInfo(otherUid(c)))}};
+$("viewEditProfile").onclick=()=>{$("profileViewModal").classList.remove("show");openEditProfile()};
+$("closeProfileView").onclick=()=>$("profileViewModal").classList.remove("show");
+
+// Tap the profile picture in the profile viewer to enlarge it.
+$("viewProfilePhoto").addEventListener("click",()=>{
+  const img=$("viewProfilePhoto").querySelector("img");
+  if(!img || !img.src)return;
+  $("zoomedProfilePhoto").src=img.src;
+  $("photoZoomModal").classList.add("show");
+});
+$("closePhotoZoom").onclick=()=>$("photoZoomModal").classList.remove("show");
+$("photoZoomModal").addEventListener("click",e=>{
+  if(e.target===$("photoZoomModal"))$("photoZoomModal").classList.remove("show");
+});
+
+$("closeProfile").onclick=()=>{$("profileModal").classList.remove("show")};
+let cropImage=null,cropZoom=1,cropX=0,cropY=0,dragStart=null;
+const cropCanvas=$("cropCanvas"),cropCtx=cropCanvas.getContext("2d");
+function paintCrop(){if(!cropImage)return;const w=cropCanvas.width,h=cropCanvas.height,scale=Math.max(w/cropImage.width,h/cropImage.height)*cropZoom,iw=cropImage.width*scale,ih=cropImage.height*scale;cropCtx.clearRect(0,0,w,h);cropCtx.drawImage(cropImage,(w-iw)/2+cropX,(h-ih)/2+cropY,iw,ih)}
+$("profilePhoto").addEventListener("change",()=>{const file=$("profilePhoto").files&&$("profilePhoto").files[0];if(!file)return;if(!file.type.startsWith("image/")){alert("ပုံဖိုင်ကို ရွေးပေးပါ။");return}const reader=new FileReader();reader.onload=()=>{cropImage=new Image();cropImage.onload=()=>{cropZoom=1;cropX=0;cropY=0;$("cropZoom").value="1";paintCrop();$("cropModal").classList.add("show")};cropImage.src=reader.result};reader.readAsDataURL(file)});
+$("cropZoom").addEventListener("input",()=>{cropZoom=Number($("cropZoom").value);paintCrop()});
+cropCanvas.addEventListener("pointerdown",e=>{dragStart={x:e.clientX,y:e.clientY,baseX:cropX,baseY:cropY};cropCanvas.setPointerCapture(e.pointerId)});
+cropCanvas.addEventListener("pointermove",e=>{if(!dragStart)return;const rect=cropCanvas.getBoundingClientRect(),ratio=cropCanvas.width/rect.width;cropX=dragStart.baseX+(e.clientX-dragStart.x)*ratio;cropY=dragStart.baseY+(e.clientY-dragStart.y)*ratio;paintCrop()});
+for(const ev of ["pointerup","pointercancel"]){cropCanvas.addEventListener(ev,()=>dragStart=null)}
+$("cancelCrop").onclick=()=>{$("cropModal").classList.remove("show");$("profilePhoto").value="";cropImage=null};
+$("applyCrop").onclick=()=>{if(!cropImage)return;const out=document.createElement("canvas");out.width=512;out.height=512;const scale=Math.max(out.width/cropImage.width,out.height/cropImage.height)*cropZoom,iw=cropImage.width*scale,ih=cropImage.height*scale;out.getContext("2d").drawImage(cropImage,(out.width-iw)/2+cropX*(out.width/cropCanvas.width),(out.height-ih)/2+cropY*(out.height/cropCanvas.height),iw,ih);out.toBlob(blob=>{if(!blob)return;profilePhotoFile=new File([blob],"chattera-profile-crop.jpg",{type:"image/jpeg"});const preview=$("profilePreview");preview.innerHTML="";const im=document.createElement("img");im.src=URL.createObjectURL(blob);preview.append(im);$("cropModal").classList.remove("show")},"image/jpeg",.9)};
+
+function compressProfileImage(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onerror=()=>reject(new Error("ပုံဖိုင်ကို ဖတ်မရပါ။"));reader.onload=()=>{const img=new Image();img.onerror=()=>reject(new Error("ပုံဖိုင်ကို ဖွင့်မရပါ။"));img.onload=()=>{const max=320,scale=Math.min(1,max/Math.max(img.width,img.height)),canvas=document.createElement("canvas");canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);resolve(canvas.toDataURL("image/jpeg",0.72))};img.src=reader.result};reader.readAsDataURL(file)})}
+$("saveProfile").onclick=async()=>{const name=$("profileName").value.trim(),btn=$("saveProfile");if(!name){$("profileNotice").textContent="Username ထည့်ပေးပါ။";$("profileNotice").className="notice error";return}btn.disabled=true;try{const me=userInfo(currentUser.uid);let photoURL=me.photoURL||"";if(profilePhotoFile)photoURL=await compressProfileImage(profilePhotoFile);const bio=$("profileBio").value.trim();await updateDoc(doc(db,"users",currentUser.uid),{displayName:name,photoURL,bio});await updateProfile(currentUser,{displayName:name});const index=users.findIndex(u=>u.uid===currentUser.uid);const updated={...me,uid:currentUser.uid,displayName:name,photoURL,bio,email:currentUser.email||me.email||""};if(index>=0)users[index]=updated;else users.push(updated);renderMyProfile();renderChats();$("profileModal").classList.remove("show")}catch(e){$("profileNotice").textContent=errorText(e);$("profileNotice").className="notice error"}finally{btn.disabled=false}};
+$("sendForm").addEventListener("submit",async e=>{e.preventDefault();const text=$("messageInput").value.trim();if(!text||!activeChatId)return;const btn=e.submitter;btn.disabled=true;try{const messageData={senderId:currentUser.uid,text,createdAt:serverTimestamp()};if(replyDraft){messageData.replyText=replyDraft.text;messageData.replySender=replyDraft.sender}await addDoc(collection(db,"chats",activeChatId,"messages"),messageData);await updateDoc(doc(db,"chats",activeChatId),{lastMessage:(replyDraft?"↩ ":"")+text,updatedAt:serverTimestamp()});$("messageInput").value="";clearReplyDraft()}catch(err){alert("စာပို့မရပါ: "+errorText(err))}finally{btn.disabled=false}});
+$("back").onclick=()=>{$("app").classList.remove("chat-open");activeChatId=null;$("conversation").style.display="none";$("welcome").style.display="grid";if(unsubMessages){unsubMessages();unsubMessages=null}renderChats()};
+$("logoutBtn").onclick=async()=>{if(unsubChats)unsubChats();if(unsubMessages)unsubMessages();try{if(currentUser)await updateDoc(doc(db,"users",currentUser.uid),{online:false,lastSeen:serverTimestamp()})}catch(e){console.warn(e)}await signOut(auth)};
+onAuthStateChanged(auth,async user=>{currentUser=user;if(user){$("authScreen").style.display="none";$("app").style.display="grid";listenUsers();listenChats();startPresence()}else{stopPresence();if(unsubUsers){unsubUsers();unsubUsers=null}$("app").style.display="none";$("authScreen").style.display="grid";if(unsubChats)unsubChats();if(unsubMessages)unsubMessages()}});
+</script>
+</body></html>
